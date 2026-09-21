@@ -14,6 +14,16 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
     return;
   }
 
+  // express.json() rejects a malformed or oversized body before any route runs.
+  const bodyError = error as Error & { type?: string; status?: number };
+  if (typeof bodyError.type === "string" && bodyError.type.startsWith("entity.")) {
+    const status = bodyError.status ?? 400;
+    res.status(status).json({
+      message: status === 413 ? "Request body is too large" : "Invalid JSON body",
+    });
+    return;
+  }
+
   if (error instanceof ZodError) {
     // formErrors holds whole-object messages (e.g. "provide at least one field"),
     // fieldErrors holds the per-field ones.
