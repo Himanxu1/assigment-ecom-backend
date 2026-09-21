@@ -5,6 +5,7 @@ import morgan from "morgan";
 
 import { env } from "./config/env.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
+import { routes } from "./routes.js";
 
 export const app = express();
 
@@ -20,6 +21,7 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// Routes are mounted above this line.
+app.use("/api", routes);
+
 app.use(notFoundHandler);
 app.use(errorHandler);
