@@ -15,9 +15,12 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   }
 
   if (error instanceof ZodError) {
+    // formErrors holds whole-object messages (e.g. "provide at least one field"),
+    // fieldErrors holds the per-field ones.
+    const { formErrors, fieldErrors } = z.flattenError(error);
     res.status(400).json({
-      message: "Validation failed",
-      errors: z.flattenError(error).fieldErrors,
+      message: formErrors[0] ?? "Validation failed",
+      errors: fieldErrors,
     });
     return;
   }
