@@ -2,10 +2,11 @@ import { Router } from "express";
 
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { productRoutes } from "./modules/product/product.routes.js";
-import { shopRoutes } from "./modules/shop/shop.routes.js";
+import { publicShopRoutes, vendorShopRoutes } from "./modules/shop/shop.routes.js";
 
 export const routes = Router();
 
 routes.use("/auth", authRoutes);
-routes.use("/vendor/shop", shopRoutes);
+routes.use("/shops", publicShopRoutes);
+routes.use("/vendor/shop", vendorShopRoutes);
 routes.use("/vendor/products", productRoutes);
