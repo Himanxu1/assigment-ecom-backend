@@ -4,4 +4,4 @@ dist/
 build/
 .env
 .env.*
-
+!.env.example
