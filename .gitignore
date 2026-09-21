@@ -1,7 +1,9 @@
 node_modules
-package-lock.json
 dist/
 build/
 .env
 .env.*
 !.env.example
+
+# Prisma Client is generated from prisma/schema.prisma
+src/generated/
