@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 
+import { currentUser } from "../../middleware/auth.js";
 import * as authService from "./auth.service.js";
 
 export const register: RequestHandler = async (req, res) => {
@@ -8,4 +9,8 @@ export const register: RequestHandler = async (req, res) => {
 
 export const login: RequestHandler = async (req, res) => {
   res.json(await authService.login(req.body));
+};
+
+export const me: RequestHandler = async (req, res) => {
+  res.json(await authService.getProfile(currentUser(req).id));
 };
