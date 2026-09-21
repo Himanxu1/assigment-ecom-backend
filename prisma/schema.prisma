@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CUSTOMER
+  VENDOR
+  ADMIN
+}
+
+// Vendors register as PENDING and need admin approval before they can sell.
+// Customers and admins are APPROVED on creation.
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  DISABLED
+}
+
+enum OrderStatus {
+  PLACED
+  CANCELLED
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String
+  name         String
+  role         Role
+  status       UserStatus @default(APPROVED)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  shop   Shop?
+  cart   Cart?
+  orders Order[]
+
+  @@map("users")
+}
+
+model Shop {
+  id        String   @id @default(uuid())
+  vendorId  String   @unique
+  name      String
+  address   String
+  latitude  Float
+  longitude Float
+  isOpen    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vendor   User      @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  products Product[]
+  carts    Cart[]
+  orders   Order[]
+
+  // Supports the bounding-box filter used by the nearby-shops query.
+  @@index([latitude, longitude])
+  @@map("shops")
+}
+
+model Product {
+  id          String    @id @default(uuid())
+  shopId      String
+  title       String
+  imageUrl    String
+  priceCents  Int
+  isAvailable Boolean   @default(true)
+  // Soft delete: order history must keep pointing at the product row.
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  shop       Shop        @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@index([shopId])
+  @@map("products")
+}
+
+// One cart per customer, and that cart belongs to exactly one shop.
+model Cart {
+  id         String   @id @default(uuid())
+  customerId String   @unique
+  shopId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  customer User       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  shop     Shop       @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  items    CartItem[]
+
+  @@index([shopId])
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  productId String
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Adding the same product twice bumps the quantity instead of duplicating a row.
+  @@unique([cartId, productId])
+  @@map("cart_items")
+}
+
+model Order {
+  id         String      @id @default(uuid())
+  customerId String
+  shopId     String
+  status     OrderStatus @default(PLACED)
+  totalCents Int
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  customer User        @relation(fields: [customerId], references: [id])
+  shop     Shop        @relation(fields: [shopId], references: [id])
+  items    OrderItem[]
+
+  @@index([customerId, createdAt])
+  @@index([shopId, createdAt])
+  @@map("orders")
+}
+
+// Title and price are copied in at checkout so an order never changes
+// when the vendor later edits or renames the product.
+model OrderItem {
+  id         String @id @default(uuid())
+  orderId    String
+  productId  String
+  title      String
+  priceCents Int
+  quantity   Int
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
