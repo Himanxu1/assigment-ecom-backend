@@ -9,8 +9,18 @@ import { routes } from "./routes.js";
 
 export const app = express();
 
+// Render/Vercel and friends terminate TLS in front of the app, so the real
+// client protocol and IP arrive in X-Forwarded-* headers.
+app.set("trust proxy", 1);
+
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin: env.CORS_ORIGIN
+      ? env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
+      : true,
+  }),
+);
 app.use(express.json({ limit: "100kb" }));
 
 if (env.NODE_ENV !== "test") {
