@@ -1,0 +1,15 @@
+# Assumption I made 
+
+1. A vendor should only have one shop, so according to the current implementation vendor cannot create more than one shop , and this is added to database rule .
+2. A customer cannot add to cart from more than one shop at a time.
+3. Cart locked to one shop as customer can only purchase items from one shop at a time .
+4. Customer don't have to logged in for visiting the shops
+5. Orders just get placed — nothing happens after
+6. Admin are directly created in db , no registration for them as a design principle
+
+
+# Thought process 
+
+After reading the whole project documentation , one thing i'm sure about is that this assignment is evaluating my backend skill , about how would i approach this as the requirements are pretty much blur , as I have to made some assumptions on it . So when I started I first planned how would i'll be building this . while planning i have so many thought what minimal version i can build with , as i have started this from designing the backend part of it , started with db design ( as this is the part which need more time initially as this should not be most changing part of our system ) as Everything else is refactorable in an afternoon. A bad schema means a migration, backfilling data, and touching every query and that is tedious task to do later . as I have made some assumption that one vendor will have one shop , and one more thing to focus on is the product pricing in the order , if the vendor changes the prices of the product then what will happen to the orders which are created previously . so we have made the. o we have made the decision that the order will keep its own copy of the product title and price at the time of checkout, instead of pointing to the live product row. So when the order is placed, we copy the title and the price into the order_items table, and after that the order never looks at the product table again for those values.
+
+The reason for this is simple, if the order is just referencing the product, then the moment the vendor updates the price from ₹55 to ₹99, every old order which had that product will silently start showing the new price. The customer will see a different amount than what he actually paid , which should never happen. And the worst part is there is no error anywhere. After that I have completed all the features one by one . user registration, login, shop creation , approval , add product to cart and so on..for frontend I have built at the end, and intentionally kept it minimal, because the problem statement itself is saying that the UI can be minimal and the backend is what is being evaluated. So I have not used any component library, no state management library, no form library, It is plain Next.js with fetch and some css styling. Spending more time there would mean taking time away from the part which is actually being reviewed.There are three portals in the UI :  customer, vendor and admin and after login the user is automatically taken to his own portal based on his role, and the navigation also changes according to the role.
